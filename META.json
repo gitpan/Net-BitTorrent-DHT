@@ -46,6 +46,7 @@
          },
          "requires" : {
             "AnyEvent" : "0",
+            "AnyEvent::HTTP" : "0",
             "AnyEvent::Util" : "0",
             "Bit::Vector" : "0",
             "Moose" : "0",
@@ -69,7 +70,7 @@
    "provides" : {
       "Net::BitTorrent::DHT" : {
          "file" : "lib/Net/BitTorrent/DHT.pm",
-         "version" : "v1.0.0"
+         "version" : "v1.0.1"
       },
       "Net::BitTorrent::DHT::Bucket" : {
          "file" : "lib/Net/BitTorrent/DHT/Bucket.pm",
@@ -103,5 +104,5 @@
          "web" : "https://github.com/sanko/net-bittorrent-dht"
       }
    },
-   "version" : "v1.0.0"
+   "version" : "v1.0.1"
 }
