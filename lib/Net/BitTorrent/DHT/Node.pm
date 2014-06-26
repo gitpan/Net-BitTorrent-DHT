@@ -3,22 +3,23 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use AnyEvent;
 use Net::BitTorrent::Protocol qw[:dht :compact];
-use feature 'state';
+use feature qw[state];
 use Scalar::Util;
-our $VERSION = 'v1.0.0';
+use Types::Standard qw[Bool Int Ref Str];
+our $VERSION = 'v1.0.2';
 eval $VERSION;
 #
 sub BUILD {1}
 
 #
-has 'port'     => (isa => 'Int', is => 'ro', required => 1);
-has 'host'     => (isa => 'Str', is => 'ro', required => 1);
-has 'sockaddr' => (isa => 'Str', is => 'ro', required => 1, lazy_build => 1);
+has port     => (isa => Int, is => 'ro', required => 1);
+has host     => (isa => Str, is => 'ro', required => 1);
+has sockaddr => (isa => Str, is => 'ro', required => 1, lazy_build => 1);
 
 sub _build_sockaddr {
     Net::BitTorrent::DHT::sockaddr($_[0]->host, $_[0]->port);
 }
-has 'ipv6' => (isa => 'Bool', is => 'ro', lazy_build => 1);
+has ipv6 => (isa => Bool, is => 'ro', lazy_build => 1);
 sub _build_ipv6 { length shift->sockaddr == 28 }
 for my $dir (qw[in out]) {
     has 'announce_peer_token_'
@@ -33,14 +34,14 @@ for my $dir (qw[in out]) {
                    default => sub { {} }
         );
 }
-has 'v' => (isa => 'Str', is => 'ro', writer => '_v', predicate => 'has_v');
-has 'bucket' => (isa       => 'Net::BitTorrent::DHT::Bucket',
+has v => (isa => Str, is => 'ro', writer => '_v', predicate => 'has_v');
+has bucket => (isa       => 'Net::BitTorrent::DHT::Bucket',
                  is        => 'ro',
                  writer    => 'assign_bucket',
                  weak_ref  => 1,
                  predicate => 'has_bucket'
 );
-has 'routing_table' => (isa        => 'Net::BitTorrent::DHT::RoutingTable',
+has routing_table => (isa        => 'Net::BitTorrent::DHT::RoutingTable',
                         is         => 'ro',
                         predicate  => 'has_routing_table',
                         writer     => '_routing_table',
@@ -48,20 +49,20 @@ has 'routing_table' => (isa        => 'Net::BitTorrent::DHT::RoutingTable',
                         lazy_build => 1,
                         handles    => [qw[send dht tracker]]
 );
-around 'send' => sub {
+around send => sub {
     my ($code, $self, $packet, $reply) = @_;
     $code->($self, $self, $packet, !!$reply);
 };
-has 'nodeid' => (isa       => 'Bit::Vector',
+has nodeid => (isa       => 'Bit::Vector',
                  is        => 'ro',
                  writer    => '_set_nodeid',
                  predicate => 'has_nodeid'
 );
-after '_set_nodeid' => sub {
+after _set_nodeid => sub {
     $_[0]->routing_table->assign_node($_[0]);
     $_[0]->routing_table->del_node($_[0]) if !$_[0]->has_bucket;
 };
-has 'outstanding_requests' => (isa     => 'HashRef[HashRef]',
+has outstanding_requests => (isa     => 'HashRef[HashRef]',
                                is      => 'ro',
                                traits  => ['Hash'],
                                handles => {add_request    => 'set',
@@ -73,8 +74,8 @@ has 'outstanding_requests' => (isa     => 'HashRef[HashRef]',
                                init_arg => undef,
                                default  => sub { {} }
 );
-after 'expire_request' => sub { shift->inc_fail };
-around 'add_request' => sub {
+after expire_request => sub { shift->inc_fail };
+around add_request => sub {
     my ($code, $self, $tid, $args) = @_;
     Scalar::Util::weaken $self;
     $args->{'timeout'} //= AE::timer(
@@ -85,8 +86,8 @@ around 'add_request' => sub {
     );
     $code->($self, $tid, $args);
 };
-has 'ping_timer' => (
-         isa      => 'Ref',                               # ArrayRef|EV::Timer
+has ping_timer => (
+         isa      => Ref,                               # ArrayRef|EV::Timer
          builder  => '_build_ping_timer',
          is       => 'ro',
          init_arg => undef,
@@ -98,8 +99,8 @@ sub _build_ping_timer {
     Scalar::Util::weaken $self;
     AE::timer(60 * 10, 60 * 10, sub { $self->ping if $self });
 }
-has 'seen' => (
-    isa        => 'Int',
+has seen => (
+    isa        => Int,
     is         => 'ro',
     lazy_build => 1,
     init_arg   => undef,
@@ -127,13 +128,13 @@ for my $type (qw[get_peers find_node announce_peer]) {
         );
 }
 sub _build_prev_X { {} }
-after 'BUILD' => sub {
+after BUILD => sub {
     my ($self) = @_;
     Scalar::Util::weaken $self;
     $self->_ping_timer(AE::timer(rand(30), 0, sub { $self->ping }));
 };
-has 'birth' => (is         => 'ro',
-                isa        => 'Int',
+has birth => (is         => 'ro',
+                isa        => Int,
                 init_arg   => undef,
                 lazy_build => 1
 );
@@ -153,7 +154,7 @@ sub ping {
 sub _reply_ping {
     my ($self, $tid) = @_;
     my $packet
-        = build_dht_reply_ping($tid, pack('H*', $self->dht->nodeid->to_Hex));
+        = build_ping_reply($tid, pack('H*', $self->dht->nodeid->to_Hex));
     my $sent = $self->send($packet, 1);
     $self->inc_fail() if !$sent;
     return $sent;
@@ -184,7 +185,7 @@ sub _reply_find_node {
                  map { [$_->host, $_->port] }
                      @{$self->routing_table->nearest_bucket($target)->nodes});
     return if !$nodes;
-    my $packet = build_dht_reply_find_node($tid, pack('H*', $target->to_Hex),
+    my $packet = build_find_node_reply($tid, pack('H*', $target->to_Hex),
                                            $nodes);
     my $sent = $self->send($packet, 1);
     $self->inc_fail() if !$sent;
@@ -228,7 +229,7 @@ sub _reply_get_peers {
     } @{$self->tracker->get_peers($id) || []};
     return if (!@values && !$nodes);
     my $packet =
-        build_dht_reply_get_peers($tid,
+        build_get_peers_reply($tid,
                                   $id->to_Hex,
                                   \@values,
                                   $nodes,
@@ -274,7 +275,7 @@ sub _reply_announce_peer {
             $a_ref->{'token'})
         )
     {   $packet =
-            build_dht_reply_error($tid,
+            build_error_reply($tid,
                                   [203,
                                    'Incorrect write token in announce_peer'
                                   ]
@@ -284,19 +285,19 @@ sub _reply_announce_peer {
          !$self->tracker->add_peer($info_hash, [$self->host, $a_ref->{'port'}]
          )
         )
-    {   $packet = build_dht_reply_error($tid,
+    {   $packet = build_error_reply($tid,
                                       [202, 'Failed to add peer to tracker']);
     }
     else {
-        $packet = build_dht_reply_announce_peer($tid,
+        $packet = build_announce_peer_reply($tid,
                                       pack('H*', $self->dht->nodeid->to_Hex));
     }
     my $sent = $self->send($packet, 1);
     $self->inc_fail() if !$sent;
     return $sent;
 }
-has 'fail' => (
-    isa      => 'Int',
+has fail => (
+    isa      => Int,
     traits   => ['Counter'],
     default  => 0,
     is       => 'ro',

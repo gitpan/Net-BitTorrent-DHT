@@ -1,5 +1,5 @@
 ---
-abstract: 'Kademlia-like DHT Node'
+abstract: 'Kademlia-like DHT Node for BitTorrent'
 author:
   - 'Sanko Robinson <sanko@cpan.org> - http://sankorobinson.com/'
 build_requires:
@@ -28,22 +28,19 @@ no_index:
 provides:
   Net::BitTorrent::DHT:
     file: lib/Net/BitTorrent/DHT.pm
-    version: v1.0.1
+    version: v1.0.2
   Net::BitTorrent::DHT::Bucket:
     file: lib/Net/BitTorrent/DHT/Bucket.pm
-    version: v1.0.0
+    version: v1.0.2
   Net::BitTorrent::DHT::Node:
     file: lib/Net/BitTorrent/DHT/Node.pm
-    version: v1.0.0
+    version: v1.0.2
   Net::BitTorrent::DHT::RoutingTable:
     file: lib/Net/BitTorrent/DHT/RoutingTable.pm
-    version: v1.0.0
-  Net::BitTorrent::DHT::Standalone:
-    file: lib/Net/BitTorrent/DHT/Standalone.pm
-    version: v1.0.0
+    version: v1.0.2
   Net::BitTorrent::DHT::Tracker:
     file: lib/Net/BitTorrent/DHT/Tracker.pm
-    version: v1.0.0
+    version: v1.0.2
 recommends:
   Config::IPFilter: '0'
 requires:
@@ -54,7 +51,7 @@ requires:
   Moose: '0'
   Moose::Role: '0'
   Moose::Util::TypeConstraints: '0'
-  Net::BitTorrent::Protocol: '0'
+  Net::BitTorrent::Protocol: v1.0.2
   Scalar::Util: '0'
   Socket: '0'
   feature: '0'
@@ -63,4 +60,4 @@ resources:
   bugtracker: https://github.com/sanko/net-bittorrent-dht/issues
   homepage: https://github.com/sanko/net-bittorrent-dht
   repository: git://github.com/sanko/net-bittorrent-dht.git
-version: v1.0.1
+version: v1.0.2

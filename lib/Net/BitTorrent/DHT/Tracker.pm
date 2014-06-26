@@ -1,9 +1,9 @@
 package Net::BitTorrent::DHT::Tracker;
 use Moose;
-our $VERSION = 'v1.0.0';
+our $VERSION = 'v1.0.2';
 eval $VERSION;
 #
-has 'peers' => (isa      => 'HashRef[ArrayRef]',
+has peers => (isa      => 'HashRef[ArrayRef]',
                 is       => 'ro',
                 default  => sub { {} },
                 init_arg => undef,
@@ -15,7 +15,7 @@ has 'peers' => (isa      => 'HashRef[ArrayRef]',
                             del_peers  => 'delete'
                 }
 );
-around 'get_peers' => sub {
+around get_peers => sub {
     my ($code, $self, $infohash) = @_;
     $code->($self, blessed $infohash ? $infohash->to_Hex : $infohash);
 };
@@ -28,7 +28,7 @@ sub add_peer {
         if !grep { $_->[0] eq $peer->[0] && $_->[1] eq $peer->[1] }
         @{$self->get_peers($infohash->to_Hex)};
 }
-has 'routing_table' => (isa      => 'Net::BitTorrent::DHT::RoutingTable',
+has routing_table => (isa      => 'Net::BitTorrent::DHT::RoutingTable',
                         is       => 'ro',
                         required => 1,
                         weak_ref => 1,

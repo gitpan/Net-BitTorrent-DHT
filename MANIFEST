@@ -9,7 +9,6 @@ lib/Net/BitTorrent/DHT.pm
 lib/Net/BitTorrent/DHT/Bucket.pm
 lib/Net/BitTorrent/DHT/Node.pm
 lib/Net/BitTorrent/DHT/RoutingTable.pm
-lib/Net/BitTorrent/DHT/Standalone.pm
 lib/Net/BitTorrent/DHT/Tracker.pm
 minil.toml
 t/00_compile.t

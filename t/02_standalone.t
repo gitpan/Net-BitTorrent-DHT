@@ -1,53 +1,41 @@
 package t::Standalone;
-
-    use strict;
-    use warnings;
-    use lib 't', 'lib';
-    use lib '../t', '../lib';
-    our $MAJOR = 0; our $MINOR = 74; our $DEV = 13; our $VERSION = sprintf('%0d.%03d' . ($DEV ? (($DEV < 0 ? '' : '_') . '%03d') : ('')), $MAJOR, $MINOR, abs $DEV);
-    use Test::More;
-    use Test::Moose;
-    use AnyEvent;
-    use Bit::Vector;
+use strict;
+use warnings;
+use lib 't',    'lib';
+use lib '../t', '../lib';
+use Test::More;
+use Test::Moose;
+use AnyEvent;
+use Bit::Vector;
 use parent 'Test::Class';
 use feature 'state';
 #
 sub class {'Net::BitTorrent::DHT'}
+#
+sub new_args {
+    my $t = shift;
+    [    #port => [1337 .. 3339, 0],
+       boot_nodes => [['router.utorrent.com',   6881],
+                      ['router.bittorrent.com', 6881],
+                      ['router.bittorrent.com', 8991]
+       ],
+       on_listen_failure => sub {
+           my ($s, $a) = @_;
+           note $a->{'message'};
+           $t->{'cv'}->end if $a->{'protocol'} =~ m[udp];
+       },
+       on_listen_success => sub { my ($s, $a) = @_; note $a->{'message'}; }
+    ];
+}
 
-    #
-    sub new_args {
-        my $t = shift;
-        [    #port => [1337 .. 3339, 0],
-           boot_nodes => [['router.utorrent.com',   6881],
-                          ['router.bittorrent.com', 6881]
-           ],
-           on_listen_failure => sub {
-               my ($s, $a) = @_;
-               note $a->{'message'};
-               $t->{'cv'}->end if $a->{'protocol'} =~ m[udp];
-           },
-           on_listen_success =>
-               sub { my ($s, $a) = @_; note $a->{'message'}; }
-        ];
-    }
+sub startup : Tests(startup => 3) {
+    my $self = shift;
+    use_ok $self->class;
+    can_ok $self->class, 'new';
+    explain $self->new_args;
+    $self->{'dht'} = new_ok $self->class, $self->new_args;
+}
 
-    sub startup : Tests(startup => 3) {
-        my $self = shift;
-        use_ok $self->class;
-        can_ok $self->class, 'new';
-        explain $self->new_args;
-        $self->{'dht'} = new_ok $self->class, $self->new_args;
-    }
-
-    sub check_role : Test( 9 ) {
-        my $self = shift;
-        does_ok $self->{'dht'}, 'Net::BitTorrent::DHT::Standalone';
-        has_attribute_ok $self->{'dht'}, $_ for qw[port
-            udp6 udp6_sock udp6_host
-            udp4 udp4_sock udp4_host ];
-        ok !$self->{'dht'}->has_client,
-            '... standalone dht nodes have no client';
-    }
 sub setup : Test(setup => 0) {
     my $self = shift;
 }
@@ -93,15 +81,14 @@ sub quest_find_node : Test( no_plan ) {
     my $l = join '', map { [0 .. 9, 'a' .. 'f']->[int rand(16)] } 1 .. 40;
     note 'Seeking nodes near ' . $l;
     $s->{'quest'}{'find_node'} = $s->{'dht'}->find_node(
-        $l,
+        Bit::Vector->new_Hex(160, $l),
         sub {
             my ($tar, $nd, $pr) = @_;
             subtest 'find_node callback' => sub {
                 plan tests => 3;
                 isa_ok($tar, 'Bit::Vector',
                        'Target isa a Bit::Vector object');
-                isa_ok($nd,
-                       'Net::BitTorrent::DHT::Node',
+                isa_ok($nd, 'Net::BitTorrent::DHT::Node',
                        'Node is a ...::Node');
                 is ref $pr, 'ARRAY',
                     'List of close nodes is... a list... of addrs?';
@@ -138,8 +125,7 @@ sub quest_announce_peer : Test( no_plan ) {
                 plan tests => 3;
                 isa_ok($infohash, 'Bit::Vector',
                        'Infohash isa a Bit::Vector object');
-                isa_ok($node,
-                       'Net::BitTorrent::DHT::Node',
+                isa_ok($node, 'Net::BitTorrent::DHT::Node',
                        'Node is a ...::Node');
                 ok $port =~ m[^\d+$], 'Port is... a number';
                 note sprintf
@@ -163,15 +149,14 @@ sub quest_get_peers : Test( no_plan ) {
     $s->{'cv'}->begin;
     note 'Seeking peers with ', $s->{'ih'};
     $s->{'quest'}{'get_peers'} = $s->{'dht'}->get_peers(
-        $s->{'ih'},
+        Bit::Vector->new_Hex(160, $s->{'ih'}),
         sub {
             my ($ih, $nd, $pr) = @_;
             subtest 'get_peers callback' => sub {
                 plan tests => 3;
                 isa_ok($ih, 'Bit::Vector',
                        'Infohash isa a Bit::Vector object');
-                isa_ok($nd,
-                       'Net::BitTorrent::DHT::Node',
+                isa_ok($nd, 'Net::BitTorrent::DHT::Node',
                        'Node is a ...::Node');
                 is ref $pr, 'ARRAY',
                     'List of peers is... a list... of peers?';
@@ -190,6 +175,6 @@ sub quest_get_peers : Test( no_plan ) {
     is ref $s->{'quest'}{'get_peers'}, 'ARRAY',
         'get_peers quest is an array reference';
 }
-    #
-    __PACKAGE__->runtests() if !caller;
+#
+__PACKAGE__->runtests() if !caller;
 1;
