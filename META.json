@@ -4,7 +4,7 @@
       "Sanko Robinson <sanko@cpan.org> - http://sankorobinson.com/"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v1.1.0",
+   "generated_by" : "Minilla/v2.2.1",
    "license" : [
       "artistic_2"
    ],
@@ -55,6 +55,7 @@
             "Net::BitTorrent::Protocol" : "v1.0.2",
             "Scalar::Util" : "0",
             "Socket" : "0",
+            "Types::Standard" : "0",
             "feature" : "0",
             "perl" : "v5.10.0"
          }
@@ -70,23 +71,23 @@
    "provides" : {
       "Net::BitTorrent::DHT" : {
          "file" : "lib/Net/BitTorrent/DHT.pm",
-         "version" : "v1.0.2"
+         "version" : "v1.0.3"
       },
       "Net::BitTorrent::DHT::Bucket" : {
          "file" : "lib/Net/BitTorrent/DHT/Bucket.pm",
-         "version" : "v1.0.2"
+         "version" : "v1.0.3"
       },
       "Net::BitTorrent::DHT::Node" : {
          "file" : "lib/Net/BitTorrent/DHT/Node.pm",
-         "version" : "v1.0.2"
+         "version" : "v1.0.3"
       },
       "Net::BitTorrent::DHT::RoutingTable" : {
          "file" : "lib/Net/BitTorrent/DHT/RoutingTable.pm",
-         "version" : "v1.0.2"
+         "version" : "v1.0.3"
       },
       "Net::BitTorrent::DHT::Tracker" : {
          "file" : "lib/Net/BitTorrent/DHT/Tracker.pm",
-         "version" : "v1.0.2"
+         "version" : "v1.0.3"
       }
    },
    "release_status" : "stable",
@@ -100,5 +101,5 @@
          "web" : "https://github.com/sanko/net-bittorrent-dht"
       }
    },
-   "version" : "v1.0.2"
+   "version" : "v1.0.3"
 }

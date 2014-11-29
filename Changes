@@ -1,5 +1,9 @@
 Revision history for Perl extension Net-BitTorrent-DHT
 
+v1.0.3 2014-11-29T17:12:40Z
+
+    - Declare Type::Standard dependency
+    
 v1.0.2 2014-06-26T17:00:33Z
 
     - Serve as a standalone node by default
